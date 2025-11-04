@@ -23,3 +23,5 @@
 * Nearest Neighbour Algorithm: https://en.wikipedia.org/wiki/Nearest_neighbour_algorithm
 * Slide 34 from AnyTime Algorithms Psuedocode by Dr.Keogh
 * 2-opt : https://en.wikipedia.org/wiki/2-opt
+* KMeans Psuedocode:https://en.wikipedia.org/wiki/K-means_clustering
+* generating random values in a list: https://stackoverflow.com/questions/16655089/python-random-numbers-into-a-list

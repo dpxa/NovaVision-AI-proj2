@@ -11,6 +11,9 @@ def search(helper: TSPHelper, stop_event: threading.Event, alg_num: int):
     elif (alg_num == 1) :
         print("\tUsing NN_epsilon_search")
         return NN_epsilon_search(helper, stop_event)
+    elif (alg_num == 2):
+        print("\tUsing KMeans algorithm")
+        return callKMeans(helper)
     else:
         print("\tUsing NN_2opt_decay_search")
         return NN_2opt_decay_search(helper, stop_event)
@@ -153,3 +156,38 @@ def Two_opt(helper, path, dist):
                 break
 
     return path, dist
+
+def callKMeans(helper):
+    for k in range(1,4):
+        KMeans(helper,k)
+
+def KMeans(helper,K=3):
+    points = set(range(0,helper.num_points))
+    centroids = random.sample(points,K)
+    converge = False
+
+    while converge == False:
+        clusters = [] * K
+        for i in range(len(points)- 1):
+            point = points[i]
+            closestIndex = 0
+            minDist = helper.lookup_table[point][centroids[0]]
+            for j in range(1,K-1):
+                d = helper.lookup_table[point][centroids[j]]
+                if d < minDist:
+                    minDist = d
+                    closestIndex = j
+            clusters[closestIndex].append(point)
+
+        newCentroids = []
+        for i in range(K-1):
+            newCentroid = np.mean(clusters[i])
+            newCentroids.append(newCentroid)
+        
+        if newCentroids == centroids:
+            converge = True
+        else:
+            centroids = newCentroids
+    
+    return clusters
+
