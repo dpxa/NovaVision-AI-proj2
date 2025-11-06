@@ -54,7 +54,7 @@ def image_gen(fileName, directory,bestPath, pathDistance, helper):
     print(f"Route image saved as {outputFileName}")
 
 def main():
-    print("ComputeDronePath")
+    print("Compute DronePath")
     filein = input("Enter the name of the file: ")
 
     if filein == "":
