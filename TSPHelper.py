@@ -8,18 +8,33 @@ class TSPHelper:
 
     def data_to_list(self):
         data = []
+        min_x = float('inf')
+        min_y = float('inf')
 
         with open(self.filein, "r") as f:
             for line in f:
                 # strip whitespace and split line into individual coordinates
                 row = line.strip().split()
-                data.append((float(row[0]), float(row[1])))
+                x = float(row[0])
+                y = float(row[1])
+                data.append((x, y))
+                
+                if x < min_x:
+                    min_x = x
+                if y < min_y:
+                    min_y = y
             
-            if (data[-1] == data[0]):
+            # scale the cordinates to positive values only.
+            scaled_data = []
+            for p in data:
+                scaled_data.append((p[0] - min_x, p[1] - min_y))
+                
+            
+            if (scaled_data[-1] == scaled_data[0]):
                 data.pop()
             # input file can either go back to home at the end or omit home
 
-        return data
+        return scaled_data
 
     def populate_lookup_table(self):
         # create 2d matrix and initialize all values to 0.0
