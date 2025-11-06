@@ -51,18 +51,18 @@ def random_search(helper: TSPHelper, stop_event: threading.Event):
     
     return best_path, ceil(min_dist)
 
-def NN_2opt_decay_search (helper: TSPHelper, stop_event: threading.Event):
+def NN_2opt_decay_search (helper: TSPHelper):
     global best_path
     global min_dist
     
     best_path = []
     min_dist = float('inf')
     
-    if not stop_event.is_set():
-        nearest_neighbor(helper, 0.0, True)
 
-    while not stop_event.is_set():
-        nearest_neighbor(helper, 0.12, True)
+    nearest_neighbor(helper, 0.0, True)
+
+
+    nearest_neighbor(helper, 0.12, True)
         
     flip_best_path()
 
@@ -195,7 +195,7 @@ def callKMeans(helper):
             tempFileFunc = helperFunction1(helper, cluster)
             #calling the best search algorithm for each drone and its cluster
             #getting the best path and distance for that path
-            path, dist = NN_2opt_decay_search(tempFileFunc, threading.Event())
+            path, dist = NN_2opt_decay_search(tempFileFunc)
 
             #getting the final results of each drone for each k mean alg
             finalClusterVal.append({"drone": j+1,"centroid":centroids[j], "path": path, "distance": dist }) #things to have drone no., centroid, path, dist
