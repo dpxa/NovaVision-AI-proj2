@@ -54,16 +54,19 @@ def random_search(helper: TSPHelper, stop_event: threading.Event):
 def NN_2opt_decay_search (helper: TSPHelper):
     global best_path
     global min_dist
-    
+
     best_path = []
     min_dist = float('inf')
-    
-
-    nearest_neighbor(helper, 0.0, True)
 
 
-    nearest_neighbor(helper, 0.12, True)
-        
+    nearest_neighbor(helper, 0.0, False) #fast nearest neighbour
+
+    #if cluster small
+    n = helper.num_points
+    if n <= 400:
+        #do teh 2opt
+        nearest_neighbor(helper, 0.12, True)
+
     flip_best_path()
 
     return best_path, ceil(min_dist)
@@ -177,7 +180,7 @@ def helperFunction1(helper, clusterCoors):
 def callKMeans(helper):
     results = {} #storing each k value and each drone info in dictionary
 
-    for k in range(1, 4):
+    for k in range(1, 5):
         print(f"\n K means algorithm with K = {k}")
 
         clusters, centroids = KMeans(helper, k) #calling the k means algorithm
@@ -204,7 +207,7 @@ def callKMeans(helper):
         results[k] = finalClusterVal
     return results
 
-def KMeans(helper,K=3):
+def KMeans(helper,K=4):
     points = list(range(helper.num_points))
     centroids = random.sample(points,K)
     converge = False
