@@ -60,12 +60,6 @@ def main():
     if filein == "":
         filein = "input.txt"
 
-    # # set flag to stop the thread when "Enter key" is hit
-    # wait_thread = threading.Thread(target = wait_for_enter)
-    #  # Daemon thread will exit when the main program exits
-    # wait_thread.daemon = True
-    # wait_thread.start()
-
     try:
         open(filein, 'r')
     except FileNotFoundError:
@@ -81,22 +75,26 @@ def main():
         #looping through the values and finding the total distance
         finalSumDistance = 0
         for a in valueCluster:
-            finalSumDistance += a["distance"]
+            if "distance" in a:
+                finalSumDistance += a["distance"]
         #printing the values
         print(f"\n{key}) If you use {key} drone(s), the total route will be {round(finalSumDistance,1)} meters")
 
         #looping through the results
         for j, cluster in enumerate(valueCluster):
-            centroidVal = cluster["centroid"]
-            #lookup
-            xVal, yVal = helper.data[centroidVal]
+            if "centroid" not in cluster:
+                continue #skip if no centroid
+            else:
+                centroidVal = cluster["centroid"]
+                #lookup
+                xVal, yVal = helper.data[centroidVal]
 
-            locationTotal = len(cluster["path"])
-            # the distance covered by the drone
+                locationTotal = len(cluster["path"])
+                # the distance covered by the drone
 
-            dist = cluster["distance"]
-            #printing the land pad stuff
-            print(f" {chr(105+j)}. Landing Pad should be at [{int(xVal)},{int(yVal)}], serving {locationTotal} locations, route is {round(dist,1)} meters")
+                dist = cluster["distance"]
+                #printing the land pad stuff
+                print(f" {chr(105+j)}. Landing Pad should be at [{int(xVal)},{int(yVal)}], serving {locationTotal} locations, route is {round(dist,1)} meters")
 
     #getting input k
     kNum = int(input("\n Please select your choice 1 to 4: "))

@@ -182,43 +182,68 @@ def callKMeans(helper):
 
     for k in range(1, 5):
         print(f"\n K means algorithm with K = {k}")
-
-        clusters, centroids = KMeans(helper, k) #calling the k means algorithm
+        # run 10 time for each k value and get the best result
+        bestSek = float('inf')
+        bestClusters = []
+        bestCentroids = []
+        for i in range(10):
+            clusters, centroids, sek= KMeans(helper, k) #calling the k means algorithm
+            if sek < bestSek:
+                bestSek = sek
+                bestClusters = clusters
+                bestCentroids = centroids
+            
+        print(f"\n Best SEK for K={k} is {round(bestSek,2)}")   
+            
         #to store cluster results
         finalClusterVal = []
-    #looping through cluster
-        for j, cluster in enumerate(clusters):
+        #looping through cluster
+        for j, cluster in enumerate(bestClusters):
             #check for cluster empty or not (if empty skip)
             if len(cluster) == 0:
                 continue #skip this cluster
 
+            # intial centroaid point
+            centroid_value = bestCentroids[j]
+            
+            # create a list of the landing pad coordinates
+            cluster_coords = [centroid_value]
+            for p in cluster:
+                if p != centroid_value:
+                    cluster_coords.append(p)
+
             print(f"Drone {j+1}: {len(cluster)}") #how many points the drone should visit
 
+            
             #the temporary file function
-            tempFileFunc = helperFunction1(helper, cluster)
+            tempFileFunc = helperFunction1(helper, cluster_coords)
             #calling the best search algorithm for each drone and its cluster
             #getting the best path and distance for that path
             path, dist = NN_2opt_decay_search(tempFileFunc)
+            
+            # adjusting the path to match original indices
+            adjusted_path = [cluster_coords[i] for i in path[:-1]] #excluding the last point which is return to start
 
             #getting the final results of each drone for each k mean alg
-            finalClusterVal.append({"drone": j+1,"centroid":centroids[j], "path": path, "distance": dist }) #things to have drone no., centroid, path, dist
+            finalClusterVal.append({"drone": j+1,"centroid":centroids[j], "path": adjusted_path, "distance": dist}) #things to have drone no., centroid, path, dist
 
         #appending it to the final results dictionary
         results[k] = finalClusterVal
+        results[k].append({"Sek_Score": bestSek}) #adding the sek value for each k
     return results
 
 def KMeans(helper,K=4):
     points = list(range(helper.num_points))
     centroids = random.sample(points,K)
     converge = False
-
+    final_clusters = []
     while converge == False:
         #need k empty lists n
         clusters = [[] for i in range(K)]
         for i in range(len(points)):
             point = points[i]
             closestIndex = 0
-            minDist = float('inf') #chaning to infinity to update it later
+            minDist = float('inf') #changing to infinity to update it later
             for j in range(K):
                 d = helper.lookup_table[point][centroids[j]]
                 if d < minDist:
@@ -245,11 +270,27 @@ def KMeans(helper,K=4):
                 newCentroids.append(closeCoor) #new centroid coordinates
             else: #if empty
                 newCentroids.append(random.choice(points)) #random centroids
+                
         if newCentroids == centroids:
             converge = True
+            final_clusters = clusters
         else:
             centroids = newCentroids
+            
+    # calculating Objective function (sum of squared distances)
+    total_sek = 0
+    for i in range(K):
+        cluster_sek = 0
+            
+        # check if the cluster is not empty
+        if not final_clusters[i]:
+            continue
+        for point in final_clusters[i]:
+            distance_to_centroid = helper.lookup_table[point][centroids[i]]
+            cluster_sek += distance_to_centroid ** 2
+        total_sek += cluster_sek
+                                                                  
 
     #returning clusters and centroids
-    return clusters, centroids
+    return final_clusters, centroids, total_sek
 
