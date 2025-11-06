@@ -3,7 +3,7 @@ import random
 from TSPHelper import TSPHelper
 from math import ceil
 import numpy as np
-    
+import tempfile, os
 def search(helper: TSPHelper, stop_event: threading.Event, alg_num: int):
     if (alg_num == 0):
         print("\tUsing random_search")
@@ -157,37 +157,96 @@ def Two_opt(helper, path, dist):
 
     return path, dist
 
+
+# helper function which has mini files for each drone coordiantes
+
+def helperFunction1(helper, clusterCoors):
+    file = tempfile.NamedTemporaryFile(mode="w+",delete=False)
+    for c in clusterCoors:
+        xCoor, yCoor = helper.data[c]
+        file.write(f"{xCoor} {yCoor}\n") # (x y) coordinates in temporary file
+    file.close()
+    #storing the temporary file data
+    coordFileVal = TSPHelper(file.name)
+    #deleting the temporary file
+
+    os.remove(file.name)
+    return coordFileVal
+
+#updating the k means now
 def callKMeans(helper):
-    for k in range(1,4):
-        KMeans(helper,k)
+    results = {} #storing each k value and each drone info in dictionary
+
+    for k in range(1, 4):
+        print(f"\n K means algorithm with K = {k}")
+
+        clusters, centroids = KMeans(helper, k) #calling the k means algorithm
+        #to store cluster results
+        finalClusterVal = []
+    #looping through cluster
+        for j, cluster in enumerate(clusters):
+            #check for cluster empty or not (if empty skip)
+            if len(cluster) == 0:
+                continue #skip this cluster
+
+            print(f"Drone {j+1}: {len(cluster)}") #how many points the drone should visit
+
+            #the temporary file function
+            tempFileFunc = helperFunction1(helper, cluster)
+            #calling the best search algorithm for each drone and its cluster
+            #getting the best path and distance for that path
+            path, dist = NN_2opt_decay_search(tempFileFunc, threading.Event())
+
+            #getting the final results of each drone for each k mean alg
+            finalClusterVal.append({"drone": j+1,"centroid":centroids[j], "path": path, "distance": dist }) #things to have drone no., centroid, path, dist
+
+        #appending it to the final results dictionary
+        results[k] = finalClusterVal
+    return results
 
 def KMeans(helper,K=3):
-    points = set(range(0,helper.num_points))
+    points = list(range(helper.num_points))
     centroids = random.sample(points,K)
     converge = False
 
     while converge == False:
-        clusters = [] * K
-        for i in range(len(points)- 1):
+        #need k empty lists n
+        clusters = [[] for i in range(K)]
+        for i in range(len(points)):
             point = points[i]
             closestIndex = 0
-            minDist = helper.lookup_table[point][centroids[0]]
-            for j in range(1,K-1):
+            minDist = float('inf') #chaning to infinity to update it later
+            for j in range(K):
                 d = helper.lookup_table[point][centroids[j]]
                 if d < minDist:
                     minDist = d
                     closestIndex = j
             clusters[closestIndex].append(point)
 
-        newCentroids = []
-        for i in range(K-1):
-            newCentroid = np.mean(clusters[i])
-            newCentroids.append(newCentroid)
-        
+        newCentroids = [] #calculating the new centroids now
+
+        for cluster in clusters:
+            if len(cluster) != 0:
+                #calculating the mean for x coordinates and y coordinates for centroids
+                x_y_coordinates = np.array([helper.data[i] for i in cluster])
+                #x coodinates mean
+                xMean = np.mean(x_y_coordinates[:, 0])
+
+                #y coor mean
+                yMean = np.mean(x_y_coordinates[:, 1])
+
+                #the point closest to the mean coor as the new centroid
+                #distance formula sqrt(x2 -x1)^2 +( y2 -y1)^2)
+                closeCoor = min(cluster, key=lambda x: ((helper.data[x][0] - xMean)** 2 + (helper.data[x][1] - yMean)** 2))
+
+                newCentroids.append(closeCoor) #new centroid coordinates
+            else: #if empty
+                newCentroids.append(random.choice(points)) #random centroids
         if newCentroids == centroids:
             converge = True
         else:
             centroids = newCentroids
-    
-    return clusters
+
+    #returning clusters and centroids
+    return clusters, centroids
 
