@@ -42,8 +42,8 @@ def image_gen(fileName, helper,clusters, directory):
         xValCen, yValCen = helper.data[coordinatesCentroid]
 
         #homepad a color not in color list
-        plt.plot(xValCen, yValCen, 'ko', markersize=8, label="Landing Pad (Home)", markerfacecolor="orange")  # home in red
-
+        plt.plot(xValCen, yValCen, 'ko', markersize=14, label="Landing Pad (Home)", markerfacecolor="orange",
+                 markeredgewidth=1.5)  # home in red
 
 
 
