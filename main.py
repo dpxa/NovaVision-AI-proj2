@@ -3,7 +3,7 @@ import searchAlgorithms
 # import threading
 import os
 import sys
-
+from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -74,7 +74,8 @@ def main():
     helper = TSPHelper(filein)
 
     nodes = helper.num_points
-    print(f"There are {nodes}: Solutions will be available by TIMEFILLER")
+    currentTime = datetime.now()
+    print(f"There are {nodes}: Solutions will be available by {(currentTime+timedelta(minutes=5)).strftime('%I:%M %p')}")
     finalResults = searchAlgorithms.callKMeans(helper) #K means algorithm
 
     for key, valueCluster in finalResults.items():
@@ -103,6 +104,40 @@ def main():
 
     if kNum not in finalResults:
         print("Wrong K value")
+
+    clusters = finalResults[kNum]
+    #storing the txt fill in the folder solution
+    folderName = "solution"
+
+    os.makedirs(folderName, exist_ok=True)
+    #making the file name and the file path
+    fileName = os.path.splitext(os.path.basename(filein))[0]
+    filesDone = [] #list for all files that are stored
+
+    for c in clusters:
+        totalDist = round(c["distance"],1)
+
+        path = c["path"]
+        droneNum = c["drone"]
+        outputFileName = f"{fileName}_{droneNum}_solution_{totalDist}.txt"
+        #path solution/name of file
+        outputPath = os.path.join(folderName, outputFileName)
+
+        #appending to files done list
+        filesDone.append(outputFileName)
+
+        #removing first and last 1 in my path
+        reducePath = path[1:-1] if path[0] == path[-1] else path
+
+        with open(outputPath, "w") as file:
+            #looping through the coordinates in the path
+            for i in reducePath:
+                #value containes the coordinate number
+                value = i+1
+                #writing to file
+                file.write(f"{value}\n")
+
+    print(f"Writing {', '.join(filesDone)} to disk")
 
 
 #OLD code stuff
