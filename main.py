@@ -22,7 +22,8 @@ def image_gen(fileName, helper,clusters, directory):
     plt.figure(figsize=(15, 15))  # setting the size of the graph
 
     for n, cluster in enumerate(clusters):
-
+        if "path" not in cluster:
+            continue  # skip SEK_Score entry
         #get teh corrdinates of the cluster points
 
         x_y_coordinates = np.array([helper.data[i] for i in cluster["path"]])
@@ -66,17 +67,11 @@ def image_gen(fileName, helper,clusters, directory):
     print(f"Route image saved as {outputFileName}")
 
 def main():
-    print("ComputeDronePath")
+    print("Compute DronePath")
     filein = input("Enter the name of the file: ")
 
     if filein == "":
         filein = "input.txt"
-
-    # # set flag to stop the thread when "Enter key" is hit
-    # wait_thread = threading.Thread(target = wait_for_enter)
-    #  # Daemon thread will exit when the main program exits
-    # wait_thread.daemon = True
-    # wait_thread.start()
 
     try:
         open(filein, 'r')
@@ -94,24 +89,26 @@ def main():
         #looping through the values and finding the total distance
         finalSumDistance = 0
         for a in valueCluster:
-            finalSumDistance += a["distance"]
+            if "distance" in a:
+                finalSumDistance += a["distance"]
         #printing the values
         print(f"\n{key}) If you use {key} drone(s), the total route will be {round(finalSumDistance,1)} meters")
 
         #looping through the results
         for j, cluster in enumerate(valueCluster):
-            centroidVal = cluster["centroid"]
-            #lookup
-            xVal, yVal = helper.data[centroidVal]
+            if "centroid" not in cluster:
+                continue #skip if no centroid
+            else:
+                centroidVal = cluster["centroid"]
+                #lookup
+                xVal, yVal = helper.data[centroidVal]
 
-            locationTotal = len(cluster["path"])
-            # the distance covered by the drone
+                locationTotal = len(cluster["path"])
+                # the distance covered by the drone
 
-            dist = cluster["distance"]
-            #printing the land pad stuff
-
-            numList = ["i","ii","iii","iv"]
-            print(f" {numList[j]}. Landing Pad should be at [{int(xVal)},{int(yVal)}], serving {locationTotal} locations, route is {round(dist,1)} meters")
+                dist = cluster["distance"]
+                #printing the land pad stuff
+                print(f" {chr(105+j)}. Landing Pad should be at [{int(xVal)},{int(yVal)}], serving {locationTotal} locations, route is {round(dist,1)} meters")
 
     #getting input k
     kNum = int(input("\n Please select your choice 1 to 4: "))
@@ -129,6 +126,8 @@ def main():
     filesDone = [] #list for all files that are stored
 
     for c in clusters:
+        if "distance" not in c:
+            continue  # skip SEK_Score entry
         totalDist = round(c["distance"],1)
 
         path = c["path"]
