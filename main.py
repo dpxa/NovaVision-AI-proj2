@@ -14,38 +14,50 @@ import numpy as np
 #     stop.set()
 
 #function for generating image
-def image_gen(fileName, directory,bestPath, pathDistance, helper):
+def image_gen(fileName, helper,clusters, directory):
     # best_path not include start and finish home in code
-    
-    coordinates = [[0.0] * 2 for _ in range(helper.num_points + 1)]
-    for i, idx in enumerate(bestPath):
-        coordinates[i] = helper.data[idx]
+    listColour = ["blue", "green","red","purple"] #list of colors for each cluster
 
-    coordinates = np.array(coordinates)
+    # graph path logic:
+    plt.figure(figsize=(15, 15))  # setting the size of the graph
 
-    x = coordinates[:,0]
-    #seperating the coordinates to plot the graph
-    y = coordinates[:,1]
+    for n, cluster in enumerate(clusters):
+
+        #get teh corrdinates of the cluster points
+
+        x_y_coordinates = np.array([helper.data[i] for i in cluster["path"]])
+
+
+        color = listColour[n%len(listColour)] #choosing the color
+
+        # plottong the graph
+
+        plt.plot(x_y_coordinates[:, 0], x_y_coordinates[:, 1], color=color,
+                     linewidth=2, label=f"Drone {n+1}")  # other coordiantes in blue
+
+        #centroid to standout
+        # the home coordinate plotting again to look different
+        coordinatesCentroid = cluster["centroid"]
+        xValCen, yValCen = helper.data[coordinatesCentroid]
+
+        #homepad a color not in color list
+        plt.plot(xValCen, yValCen, 'ko', markersize=8, label="Landing Pad (Home)", markerfacecolor="orange")  # home in red
 
 
 
-    #graph path logic:
-    plt.figure(figsize=(10, 10)) #setting the size of the graph
 
-    #plottong the graph
 
-    plt.plot(x, y, 'b-o', linewidth=2, markersize=4) #other coordiantes in blue
-    #the home coordinate plotting again to look different
-    plt.plot(x[0], y[0], 'ro', markersize=8, label = "Landing Pad (Home)") #home in red
 
-    plt.title(f"Drone Route - Total Distance:{pathDistance} m")
-    plt.legend()
+    plt.title(f"Drone Routes")
+    plt.legend(fontsize=16)
+
+
     plt.axis('equal')
     plt.margins(0.05)
     #saving the file as image
 
     fileName = os.path.splitext(os.path.basename(fileName))[0]
-    outputFileName = f"{fileName}_solution_{pathDistance}.jpeg"
+    outputFileName = f"{fileName}_OVERALL_SOLUTION.jpeg"
     # path solution/name of file
     outputPath = os.path.join(directory, outputFileName)
     plt.savefig(outputPath, dpi=192)
@@ -97,7 +109,9 @@ def main():
 
             dist = cluster["distance"]
             #printing the land pad stuff
-            print(f" {chr(105+j)}. Landing Pad should be at [{int(xVal)},{int(yVal)}], serving {locationTotal} locations, route is {round(dist,1)} meters")
+
+            numList = ["i","ii","iii","iv"]
+            print(f" {numList[j]}. Landing Pad should be at [{int(xVal)},{int(yVal)}], serving {locationTotal} locations, route is {round(dist,1)} meters")
 
     #getting input k
     kNum = int(input("\n Please select your choice 1 to 4: "))
@@ -139,42 +153,7 @@ def main():
 
     print(f"Writing {', '.join(filesDone)} to disk")
 
-
-#OLD code stuff
-
-    # print("\tShortest route discovered so far")
-    #
-    # alg_num = 2
-    # if len(sys.argv) > 1 and int(sys.argv[1]) >= 0 and int(sys.argv[1]) <= 2:
-    #     alg_num = int(sys.argv[1])
-    # bestPath, pathDistance = searchAlgorithms.search(helper)
-    #
-    # directory = "solution" #folder to store txt solutins
-    # os.makedirs(directory, exist_ok=True)
-    #
-    # #making the file name and the file path
-    # fileName = os.path.splitext(os.path.basename(filein))[0]
-    # outputFileName = f"{fileName}_solution_{pathDistance}.txt"
-    # #path solution/name of file
-    # outputPath = os.path.join(directory, outputFileName)
-    #
-    # #6000 meter check
-    # if pathDistance > 6000:
-    #     print(f"Warning best distance {pathDistance} exceeds 6000 meters")
-    #
-    # #output file already exists
-    # if os.path.exists(outputPath):
-    #     print("Solution already present Overwriting it")
-    #
-    # with open(outputPath, "w") as f:
-    #     #writing the output path to the txt file
-    #     for p in bestPath:
-    #         index = p + 1
-    #         f.write(f"{index}\n")
-    #
-    # print(f"Route written to disk as {outputFileName}")
-    #
-    # image_gen(filein, directory, bestPath, pathDistance, helper)
+    image_gen(fileName, helper, clusters, folderName)
 
 if __name__ == "__main__":
     main()

@@ -133,7 +133,7 @@ def nearest_neighbor(helper, epsilon, twopt = False):
     if total_dist < min_dist:
         min_dist = total_dist
         best_path = currentPath
-        print(f"\t\t{min_dist}")
+        #print(f"\t\t{min_dist}")
         return
     
 def Two_opt(helper, path, dist):
@@ -181,7 +181,7 @@ def callKMeans(helper):
     results = {} #storing each k value and each drone info in dictionary
 
     for k in range(1, 5):
-        print(f"\n K means algorithm with K = {k}")
+        #print(f"\n K means algorithm with K = {k}")
 
         clusters, centroids = KMeans(helper, k) #calling the k means algorithm
         #to store cluster results
@@ -192,16 +192,17 @@ def callKMeans(helper):
             if len(cluster) == 0:
                 continue #skip this cluster
 
-            print(f"Drone {j+1}: {len(cluster)}") #how many points the drone should visit
+            #print(f"Drone {j+1}: {len(cluster)}") #how many points the drone should visit
 
             #the temporary file function
             tempFileFunc = helperFunction1(helper, cluster)
+
             #calling the best search algorithm for each drone and its cluster
             #getting the best path and distance for that path
             path, dist = NN_2opt_decay_search(tempFileFunc)
 
             #getting the final results of each drone for each k mean alg
-            finalClusterVal.append({"drone": j+1,"centroid":centroids[j], "path": path, "distance": dist }) #things to have drone no., centroid, path, dist
+            finalClusterVal.append({"drone": j+1,"centroid":centroids[j], "path": [cluster[c] for c in path], "distance": dist }) #things to have drone no., centroid, path, dist
 
         #appending it to the final results dictionary
         results[k] = finalClusterVal
