@@ -133,7 +133,7 @@ def nearest_neighbor(helper, epsilon, twopt = False):
     if total_dist < min_dist:
         min_dist = total_dist
         best_path = currentPath
-        print(f"\t\t{min_dist}")
+        #print(f"\t\t{min_dist}")
         return
     
 def Two_opt(helper, path, dist):
@@ -225,8 +225,12 @@ def callKMeans(helper):
             adjusted_path = [cluster_coords[i] for i in path[:-1]] #excluding the last point which is return to start
 
             #getting the final results of each drone for each k mean alg
-            finalClusterVal.append({"drone": j+1,"centroid":centroids[j], "path": adjusted_path, "distance": dist}) #things to have drone no., centroid, path, dist
-
+            finalClusterVal.append({
+                "drone": j + 1,
+                 "centroid": bestCentroids[j],
+                  "path": adjusted_path,
+                  "distance": dist
+              })
         #appending it to the final results dictionary
         results[k] = finalClusterVal
         results[k].append({"Sek_Score": bestSek}) #adding the sek value for each k
