@@ -94,7 +94,7 @@ def nearest_neighbor(helper, epsilon, twopt = False):
     global min_dist
 
     points = set(range(0, helper.num_points))
-    initialPoint = random.choice(list(points))
+    initialPoint = 0
     currentPath = [initialPoint]
     points.remove(initialPoint)
 
