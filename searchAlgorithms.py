@@ -45,7 +45,7 @@ def random_search(helper: TSPHelper, stop_event: threading.Event):
         if (dist < min_dist):
             min_dist = dist
             best_path = currentPath
-            print(f"\t\t{min_dist}")
+            #print(f"\t\t{min_dist}")
             
     flip_best_path()
     
@@ -181,7 +181,7 @@ def callKMeans(helper):
     results = {} #storing each k value and each drone info in dictionary
 
     for k in range(1, 5):
-        print(f"\n K means algorithm with K = {k}")
+        #print(f"\n K means algorithm with K = {k}")
         # run 10 time for each k value and get the best result
         bestSek = float('inf')
         bestClusters = []
@@ -193,7 +193,7 @@ def callKMeans(helper):
                 bestClusters = clusters
                 bestCentroids = centroids
             
-        print(f"\n Best SEK for K={k} is {round(bestSek,2)}")   
+        #print(f"\n Best SEK for K={k} is {round(bestSek,2)}")
             
         #to store cluster results
         finalClusterVal = []
@@ -212,7 +212,7 @@ def callKMeans(helper):
                 if p != centroid_value:
                     cluster_coords.append(p)
 
-            print(f"Drone {j+1}: {len(cluster)}") #how many points the drone should visit
+            #print(f"Drone {j+1}: {len(cluster)}") #how many points the drone should visit
 
             
             #the temporary file function

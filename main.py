@@ -108,7 +108,8 @@ def main():
 
                 dist = cluster["distance"]
                 #printing the land pad stuff
-                print(f" {chr(105+j)}. Landing Pad should be at [{int(xVal)},{int(yVal)}], serving {locationTotal} locations, route is {round(dist,1)} meters")
+                numList = ["i","ii","iii","iv"]
+                print(f" {numList[j]}. Landing Pad should be at [{int(xVal)},{int(yVal)}], serving {locationTotal} locations, route is {round(dist,1)} meters")
 
     #getting input k
     kNum = int(input("\n Please select your choice 1 to 4: "))
