@@ -1,65 +1,74 @@
 from TSPHelper import TSPHelper
 import searchAlgorithms
-# import threading
+import threading
 import os
-import sys
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 import numpy as np
 
-# stop = threading.Event()
+def _worker(helper, res, ex):
+    try:
+        res[0] = searchAlgorithms.callKMeans(helper)
+    except Exception as e:
+        ex[0] = e
 
-# def wait_for_enter():
-#     input()
-#     stop.set()
+# Time KMeans out after X seconds
+def callKMeans_timeout(helper, seconds=300):
+    # arrays becuase result needs to be passed by reference
+    res = [None]
+    ex = [None]
+    
+    thread = threading.Thread(target=_worker, args=(helper, res, ex))
+    thread.daemon = True
+    thread.start()
+    thread.join(seconds)
+    
+    if thread.is_alive:
+        print("KMeans is still running")
+        thread.join()
+    
+    # so we can see if there was an exception
+    if ex[0]:
+        raise ex[0]
 
-#function for generating image
-def image_gen(fileName, helper,clusters, directory):
-    # best_path not include start and finish home in code
-    listColour = ["blue", "green","red","purple"] #list of colors for each cluster
+    return res[0]
+    
 
-    # graph path logic:
-    plt.figure(figsize=(15, 15))  # setting the size of the graph
+def image_gen(fileName, helper, clusters, directory):
+    listColour = ["blue", "green", "red", "purple"]
 
-    for n, cluster in enumerate(clusters):
-        if "path" not in cluster:
-            continue  # skip SEK_Score entry
-        #get teh corrdinates of the cluster points
+    plt.figure(figsize=(15, 15))
 
-        x_y_coordinates = np.array([helper.data[i] for i in cluster["path"]])
+    for i, cluster in enumerate(clusters):
+        x_y_coordinates = [cluster["centroid"]]
+        for idx in cluster["path"][1:-1]:
+            x_y_coordinates.append(helper.data[idx])
+        x_y_coordinates.append(cluster["centroid"])
+        
+        x_y_coordinates = np.array(x_y_coordinates)
 
-
-        color = listColour[n%len(listColour)] #choosing the color
-
-        # plottong the graph
+        # choose color
+        color = listColour[i % len(listColour)]
 
         plt.plot(x_y_coordinates[:, 0], x_y_coordinates[:, 1], color=color,
-                     linewidth=2, label=f"Drone {n+1}")  # other coordiantes in blue
+                     linewidth=2, label=f"Drone {i+1}")
 
-        #centroid to standout
-        # the home coordinate plotting again to look different
-        coordinatesCentroid = cluster["centroid"]
-        xValCen, yValCen = helper.data[coordinatesCentroid]
+        # Make centroid standout
+        xValCen, yValCen = cluster["centroid"]
 
-        #homepad a color not in color list
         plt.plot(xValCen, yValCen, 'ko', markersize=14, label="Landing Pad (Home)", markerfacecolor="orange",
-                 markeredgewidth=1.5)  # home in red
-
-
-
-
+                 markeredgewidth=1.5)
 
     plt.title(f"Drone Routes")
     plt.legend(fontsize=16)
 
-
     plt.axis('equal')
     plt.margins(0.05)
-    #saving the file as image
-
+    
+    # saving the solution
     fileName = os.path.splitext(os.path.basename(fileName))[0]
     outputFileName = f"{fileName}_OVERALL_SOLUTION.jpeg"
-    # path solution/name of file
+    
     outputPath = os.path.join(directory, outputFileName)
     plt.savefig(outputPath, dpi=192)
     plt.close()
@@ -67,88 +76,84 @@ def image_gen(fileName, helper,clusters, directory):
     print(f"Route image saved as {outputFileName}")
 
 def main():
-    print("Compute DronePath")
     filein = input("Enter the name of the file: ")
 
     if filein == "":
         filein = "input.txt"
+    elif filein == "1":
+        filein = "test_cases/Almond9832.txt"
+    elif filein == "2":
+        filein = "test_cases/pecan1212.txt"
+    elif filein == "3":
+        filein = "test_cases/threeCircle129.txt"
+    elif filein == "4":
+        filein = "test_cases/Walnut2621.txt"
 
     try:
         open(filein, 'r')
     except FileNotFoundError:
         exit("File not found")
         return
+
     helper = TSPHelper(filein)
-
     nodes = helper.num_points
-    currentTime = datetime.now()
-    print(f"There are {nodes}: Solutions will be available by {(currentTime+timedelta(minutes=5)).strftime('%I:%M %p')}")
-    finalResults = searchAlgorithms.callKMeans(helper) #K means algorithm
 
+    currentTime = datetime.now()
+    print(f"There are {nodes} nodes: Solutions will be available by {(currentTime+timedelta(minutes=5)).strftime('%I:%M %p')}")
+    
+    finalResults = callKMeans_timeout(helper)
+    
+    print("Time taken", datetime.now() - currentTime)
+
+    # output the total distance
     for key, valueCluster in finalResults.items():
-        #looping through the values and finding the total distance
         finalSumDistance = 0
+
         for a in valueCluster:
             if "distance" in a:
                 finalSumDistance += a["distance"]
-        #printing the values
+
         print(f"\n{key}) If you use {key} drone(s), the total route will be {round(finalSumDistance,1)} meters")
 
-        #looping through the results
+        # looping through the results
+        numList = ["i","ii","iii","iv"]
         for j, cluster in enumerate(valueCluster):
-            if "centroid" not in cluster:
-                continue #skip if no centroid
-            else:
-                centroidVal = cluster["centroid"]
-                #lookup
-                xVal, yVal = helper.data[centroidVal]
+            xVal, yVal = cluster["centroid"]
+            locationTotal = len(cluster["path"])
+            dist = cluster["distance"]
+ 
+            print(f" {numList[j]}. Landing Pad should be at [{int(xVal)}, {int(yVal)}], serving {locationTotal} locations, route is {round(dist,1)} meters.")
 
-                locationTotal = len(cluster["path"])
-                # the distance covered by the drone
-
-                dist = cluster["distance"]
-                #printing the land pad stuff
-                numList = ["i","ii","iii","iv"]
-                print(f" {numList[j]}. Landing Pad should be at [{int(xVal)},{int(yVal)}], serving {locationTotal} locations, route is {round(dist,1)} meters")
-
-    #getting input k
-    kNum = int(input("\n Please select your choice 1 to 4: "))
+    # getting input k
+    kNum = int(input("\nPlease select your choice 1 to 4: "))
 
     if kNum not in finalResults:
-        print("Wrong K value")
+        print("Invalid number of drones. There are only 1, 2, 3, or 4 drones avaliable.")
 
     clusters = finalResults[kNum]
-    #storing the txt fill in the folder solution
+    # storing txt file in this folder
     folderName = "solution"
 
     os.makedirs(folderName, exist_ok=True)
     #making the file name and the file path
     fileName = os.path.splitext(os.path.basename(filein))[0]
-    filesDone = [] #list for all files that are stored
+    
+    # list for all files that need to be stored
+    filesDone = []
 
     for c in clusters:
-        if "distance" not in c:
-            continue  # skip SEK_Score entry
         totalDist = round(c["distance"],1)
-
-        path = c["path"]
         droneNum = c["drone"]
+
         outputFileName = f"{fileName}_{droneNum}_solution_{totalDist}.txt"
-        #path solution/name of file
         outputPath = os.path.join(folderName, outputFileName)
 
-        #appending to files done list
         filesDone.append(outputFileName)
-
-        #removing first and last 1 in my path
-        reducePath = path[1:-1] if path[0] == path[-1] else path
-
+        
+        path = c["path"]
         with open(outputPath, "w") as file:
-            #looping through the coordinates in the path
-            for i in reducePath:
-                #value containes the coordinate number
-                value = i+1
-                #writing to file
+            for i in path:
+                value = i + 1
                 file.write(f"{value}\n")
 
     print(f"Writing {', '.join(filesDone)} to disk")

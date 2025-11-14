@@ -1,15 +1,16 @@
+import numpy as np
+
 class TSPHelper:
     def __init__(self, filein: str):
         self.filein = filein
+        # np array - (n, 2)
         self.data = self.data_to_list()
         self.num_points = len(self.data)
-        self.lookup_table_index_map = None
+        # 2D numpy array - (n, n)
         self.lookup_table = self.populate_lookup_table()
 
     def data_to_list(self):
         data = []
-        min_x = float('inf')
-        min_y = float('inf')
 
         with open(self.filein, "r") as f:
             for line in f:
@@ -18,32 +19,31 @@ class TSPHelper:
                 x = float(row[0])
                 y = float(row[1])
                 data.append((x, y))
-                
-                if x < min_x:
-                    min_x = x
-                if y < min_y:
-                    min_y = y
             
-            # scale the cordinates to positive values only.
+            self.min_x = min(row[0] for row in data)
+            self.min_y = min(row[1] for row in data)
+
+            # scale the coordinates to positive values only.
             scaled_data = []
             for p in data:
-                scaled_data.append((p[0] - min_x, p[1] - min_y))
+                scaled_data.append((p[0] - self.min_x, p[1] - self.min_y))
                 
-            
-            if (scaled_data[-1] == scaled_data[0]):
-                data.pop()
             # input file can either go back to home at the end or omit home
+            # keep tuple comparison while still a Python list
+            if scaled_data and (scaled_data[-1] == scaled_data[0]):
+                scaled_data.pop()
 
-        return scaled_data
+            self.min_x = 0
+            self.min_y = 0
+            self.max_x = max(row[0] for row in data)
+            self.max_y = max(row[1] for row in data)
+
+        # return as numpy array shape (n, 2)
+        return np.array(scaled_data, dtype=float)
 
     def populate_lookup_table(self):
-        # create 2d matrix and initialize all values to 0.0
-        lookup_table = [[0.0] * self.num_points for _ in range(self.num_points)]
-        
-        # necessary so we can lookup tuples directly in the table
-        self.lookup_table_index_map = {}
-        for i, p in enumerate(self.data):
-            self.lookup_table_index_map[p] = i
+        # create numpy 2D array initialized to 0.0
+        lookup_table = np.zeros((self.num_points, self.num_points), dtype=float)
 
         for i in range(self.num_points):
             # skip over scenario where j == i (already 0.0)
@@ -53,7 +53,7 @@ class TSPHelper:
                 dist = ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
 
                 # populate the lookup table symmetrically so we don't need to check order of coords later
-                lookup_table[i][j] = dist
-                lookup_table[j][i] = dist
+                lookup_table[i, j] = dist
+                lookup_table[j, i] = dist
 
         return lookup_table
