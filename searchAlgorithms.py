@@ -127,7 +127,7 @@ def callKMeans(helper):
         bestCentroids = []
         
         # Repeat KMeans 10 times for each k value
-        for _ in range(1):
+        for _ in range(10):
             clusters, centroids, sek = KMeans(helper, k)
             if sek < bestSek:
                 bestSek = sek
@@ -164,7 +164,7 @@ def KMeans(helper,K=4):
     for _ in range(K):
         centroids.append([random.uniform(helper.min_x, helper.max_x), random.uniform(helper.min_y, helper.max_y)])
 
-    final_clusters = []
+    clusters = []
     max_iterations = 50
 
     for _ in range(max_iterations):
@@ -200,7 +200,6 @@ def KMeans(helper,K=4):
                 break
                 
         if converged:
-            final_clusters = clusters
             break
         else:
             centroids = newCentroids
@@ -210,11 +209,11 @@ def KMeans(helper,K=4):
     for i in range(K):
         cluster_sek = 0
             
-        if not final_clusters[i]:
+        if not clusters[i]:
             continue
-        for point in final_clusters[i]:
+        for point in clusters[i]:
             cluster_sek += sqrt((helper.data[point, 0] - centroids[i][0]) ** 2 + (helper.data[point, 1] - centroids[i][1]) ** 2) ** 2
 
         total_sek += cluster_sek
                                                                   
-    return final_clusters, centroids, total_sek
+    return clusters, centroids, total_sek

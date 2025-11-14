@@ -20,24 +20,23 @@ class TSPHelper:
                 y = float(row[1])
                 data.append((x, y))
             
-            self.min_x = min(row[0] for row in data)
-            self.min_y = min(row[1] for row in data)
+            self.unscaled_min_x = min(row[0] for row in data)
+            self.unscaled_min_y = min(row[1] for row in data)
 
             # scale the coordinates to positive values only.
             scaled_data = []
             for p in data:
-                scaled_data.append((p[0] - self.min_x, p[1] - self.min_y))
+                scaled_data.append((p[0] - self.unscaled_min_x, p[1] - self.unscaled_min_y))
                 
             # input file can either go back to home at the end or omit home
             # keep tuple comparison while still a Python list
             if scaled_data and (scaled_data[-1] == scaled_data[0]):
                 scaled_data.pop()
-
+            
             self.min_x = 0
             self.min_y = 0
-            self.max_x = max(row[0] for row in data)
-            self.max_y = max(row[1] for row in data)
-
+            self.max_x = max(row[0] for row in scaled_data)
+            self.max_y = max(row[1] for row in scaled_data)
         # return as numpy array shape (n, 2)
         return np.array(scaled_data, dtype=float)
 

@@ -22,8 +22,8 @@ def callKMeans_timeout(helper, seconds=300):
     thread.daemon = True
     thread.start()
     thread.join(seconds)
-    
-    if thread.is_alive:
+
+    if thread.is_alive():
         print("KMeans is still running")
         thread.join()
     
@@ -41,11 +41,14 @@ def image_gen(fileName, helper, clusters, directory):
 
     for i, cluster in enumerate(clusters):
         x_y_coordinates = [cluster["centroid"]]
-        for idx in cluster["path"][1:-1]:
+        for idx in cluster["path"]:
             x_y_coordinates.append(helper.data[idx])
         x_y_coordinates.append(cluster["centroid"])
-        
         x_y_coordinates = np.array(x_y_coordinates)
+        
+        for point in x_y_coordinates:
+            point[0] += helper.unscaled_min_x
+            point[1] += helper.unscaled_min_y
 
         # choose color
         color = listColour[i % len(listColour)]
@@ -55,19 +58,24 @@ def image_gen(fileName, helper, clusters, directory):
 
         # Make centroid standout
         xValCen, yValCen = cluster["centroid"]
+        xValCen += helper.unscaled_min_x
+        yValCen += helper.unscaled_min_y
 
         plt.plot(xValCen, yValCen, 'ko', markersize=14, label="Landing Pad (Home)", markerfacecolor="orange",
                  markeredgewidth=1.5)
 
-    plt.title(f"Drone Routes")
+    plt.title(f"Drone Routes", size=24)
     plt.legend(fontsize=16)
 
     plt.axis('equal')
     plt.margins(0.05)
     
+    plt.xlabel("X Coordinate (meters)", fontsize=20)
+    plt.ylabel("Y Coordinate (meters)", fontsize=20)
+    
     # saving the solution
     fileName = os.path.splitext(os.path.basename(fileName))[0]
-    outputFileName = f"{fileName}_OVERALL_SOLUTION.jpeg"
+    outputFileName = f"{fileName}_{len(clusters)}_OVERALL_SOLUTION.jpeg"
     
     outputPath = os.path.join(directory, outputFileName)
     plt.savefig(outputPath, dpi=192)
@@ -76,24 +84,27 @@ def image_gen(fileName, helper, clusters, directory):
     print(f"Route image saved as {outputFileName}")
 
 def main():
-    filein = input("Enter the name of the file: ")
+    while True:
+        filein = input("Enter the name of the file: ")
 
-    if filein == "":
-        filein = "input.txt"
-    elif filein == "1":
-        filein = "test_cases/Almond9832.txt"
-    elif filein == "2":
-        filein = "test_cases/pecan1212.txt"
-    elif filein == "3":
-        filein = "test_cases/threeCircle129.txt"
-    elif filein == "4":
-        filein = "test_cases/Walnut2621.txt"
+        if filein == "":
+            filein = "input.txt"
+        elif filein == "1":
+            filein = "test_cases/Almond9832.txt"
+        elif filein == "2":
+            filein = "test_cases/pecan1212.txt"
+        elif filein == "3":
+            filein = "test_cases/threeCircle129.txt"
+        elif filein == "4":
+            filein = "test_cases/Walnut2621.txt"
+        elif filein == "5":
+            filein = "test_cases/data4096.txt"
 
-    try:
-        open(filein, 'r')
-    except FileNotFoundError:
-        exit("File not found")
-        return
+        try:
+            open(filein, 'r')
+            break
+        except FileNotFoundError:
+            print("File not found\n")
 
     helper = TSPHelper(filein)
     nodes = helper.num_points
@@ -103,7 +114,7 @@ def main():
     
     finalResults = callKMeans_timeout(helper)
     
-    print("Time taken", datetime.now() - currentTime)
+    # print("Time taken", datetime.now() - currentTime)
 
     # output the total distance
     for key, valueCluster in finalResults.items():
@@ -124,11 +135,14 @@ def main():
  
             print(f" {numList[j]}. Landing Pad should be at [{int(xVal)}, {int(yVal)}], serving {locationTotal} locations, route is {round(dist,1)} meters.")
 
-    # getting input k
-    kNum = int(input("\nPlease select your choice 1 to 4: "))
+    while True:
+        # getting input k
+        kNum = int(input("\nPlease select your choice 1 to 4: "))
 
-    if kNum not in finalResults:
-        print("Invalid number of drones. There are only 1, 2, 3, or 4 drones avaliable.")
+        if kNum not in finalResults:
+            print("Invalid number of drones. There are only 1, 2, 3, or 4 drones avaliable.")
+        else:
+            break
 
     clusters = finalResults[kNum]
     # storing txt file in this folder
@@ -141,8 +155,9 @@ def main():
     # list for all files that need to be stored
     filesDone = []
 
+    max_dist = 0
     for c in clusters:
-        totalDist = round(c["distance"],1)
+        totalDist = c["distance"]
         droneNum = c["drone"]
 
         outputFileName = f"{fileName}_{droneNum}_solution_{totalDist}.txt"
@@ -155,8 +170,20 @@ def main():
             for i in path:
                 value = i + 1
                 file.write(f"{value}\n")
+                
+        if totalDist > max_dist:
+            max_dist = totalDist
 
-    print(f"Writing {', '.join(filesDone)} to disk")
+    max_dist += 120
+    
+    hours = max_dist // 3600
+    max_dist %= 3600
+    minutes = max_dist // 60
+    seconds = max_dist % 60
+    
+    print(f"\nTotal time required (h:m:s) - {hours}:{minutes}:{seconds}")
+        
+    print(f"\nWriting {', '.join(filesDone)} to disk")
 
     image_gen(fileName, helper, clusters, folderName)
 
