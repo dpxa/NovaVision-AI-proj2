@@ -12,13 +12,23 @@ class TSPHelper:
     def data_to_list(self):
         data = []
 
-        with open(self.filein, "r") as f:
-            for line in f:
-                # strip whitespace and split line into individual coordinates
-                row = line.strip().split()
-                x = float(row[0])
-                y = float(row[1])
-                data.append((x, y))
+        with open(self.filein, "r") as f:     
+            first_char = f.read(1)
+            if not first_char:
+                print("Input file is empty")
+                exit(1)
+            f.seek(0)
+            
+            try:
+                for line in f:
+                    # strip whitespace and split line into individual coordinates
+                    row = line.strip().split()
+                    x = float(row[0])
+                    y = float(row[1])
+                    data.append((x, y))
+            except ValueError:
+                print("Input file contains data that is not a number")
+                exit(1)
             
             self.unscaled_min_x = min(row[0] for row in data)
             self.unscaled_min_y = min(row[1] for row in data)
@@ -30,7 +40,7 @@ class TSPHelper:
                 
             # input file can either go back to home at the end or omit home
             # keep tuple comparison while still a Python list
-            if scaled_data and (scaled_data[-1] == scaled_data[0]):
+            if len(scaled_data) > 1 and (scaled_data[-1] == scaled_data[0]):
                 scaled_data.pop()
             
             self.min_x = 0

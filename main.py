@@ -75,7 +75,7 @@ def image_gen(fileName, helper, clusters, directory):
     
     # saving the solution
     fileName = os.path.splitext(os.path.basename(fileName))[0]
-    outputFileName = f"{fileName}_{len(clusters)}_OVERALL_SOLUTION.jpeg"
+    outputFileName = f"{fileName}_OVERALL_SOLUTION.jpeg"
     
     outputPath = os.path.join(directory, outputFileName)
     plt.savefig(outputPath, dpi=192)
@@ -87,6 +87,7 @@ def main():
     while True:
         filein = input("Enter the name of the file: ")
 
+        '''
         if filein == "":
             filein = "input.txt"
         elif filein == "1":
@@ -99,6 +100,7 @@ def main():
             filein = "test_cases/Walnut2621.txt"
         elif filein == "5":
             filein = "test_cases/data4096.txt"
+        '''
 
         try:
             open(filein, 'r')
@@ -174,6 +176,7 @@ def main():
         if totalDist > max_dist:
             max_dist = totalDist
 
+    '''
     max_dist += 120
     
     hours = max_dist // 3600
@@ -181,8 +184,24 @@ def main():
     minutes = max_dist // 60
     seconds = max_dist % 60
     
-    print(f"\nTotal time required (h:m:s) - {hours}:{minutes}:{seconds}")
-        
+    times = []
+    if hours > 0:
+        times.append(hours)
+    if minutes > 0 or hours > 0:
+        times.append(minutes)
+    times.append(seconds)
+    
+    # output time cleanly
+    formatted_times = []
+    for i, t in enumerate(times):
+        if i == 0:
+            formatted_times.append(f"{t}")
+        else:
+            formatted_times.append(f"{t:02}")
+
+    print(f"\nTotal time required (h:m:s) - {':'.join(formatted_times)}")
+    '''
+    
     print(f"\nWriting {', '.join(filesDone)} to disk")
 
     image_gen(fileName, helper, clusters, folderName)
